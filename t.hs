@@ -129,6 +129,11 @@ sortTasksById []     = []
 sortTasksById (x:xs) = sortTasksById [(a, b) | (a,b) <- xs , a <= ( fst x ) ] 
                     ++ [x] 
                     ++ sortTasksById [(a, b) | (a,b) <- xs, a > (fst x)]
+
+getMaxLength :: [String] -> Int
+getMaxLength ids = maximum ls
+    where ls = map length ids
+
 --getAllTasks
 getAllTasks file = do
     contents <- readFile file 
@@ -137,8 +142,9 @@ getAllTasks file = do
         tdOrd     = sortTasksById tdIds
         tdJustIds = getJustIds tdOrd
         tdMinIds  = minimizeIds tdJustIds
+        mx        = getMaxLength tdMinIds
         tdJustTsk = getJustTasks tdOrd
-        tasks = zipWith (\id value ->  id ++ " | " ++ value)
+        tasks = zipWith (\id value ->  id ++ ( take ( mx - (length id) ) $ repeat ' ') ++ " | " ++ value)
                         tdMinIds tdJustTsk
     mapM_ putStrLn tasks
 
