@@ -45,7 +45,7 @@ no Nothing = -1
 
 execute :: String -> String -> [String] -> IO ()
 execute file "finish" value = finishTask file (value !! 1)  
-execute file "edit"   value = editTask file ( value !! 1 ) ( value !! 2 ) 
+execute file "edit"   value = editTask file ( value !! 1 ) ( join " " $ drop 2 value ) 
 execute file "remove" value = removeTask file (value !! 1)
 execute _ _ _ = do
     putStrLn "ERROR!"
@@ -147,6 +147,7 @@ getAllTasks file = do
         tasks = zipWith (\id value ->  id ++ ( take ( mx - (length id) ) $ repeat ' ') ++ " | " ++ value)
                         tdMinIds tdJustTsk
     mapM_ putStrLn tasks
+    
 
 --getTask 
 getTask :: String -> [(String, String)] -> (String, String)
@@ -171,12 +172,13 @@ removeTask file id = do
         tdJustIds = getJustIds tdOrd
         tdMinIds = minimizeIds tdJustIds
         tdJustTsk = getJustTasks tdOrd
-        id_ts = zipWith (\id value -> (id, value))
-                        tdMinIds tdJustTsk
-        tasks = zipWith (\id value -> id  ++ " - " ++ value)
+        fid_ts = zipWith (\id value -> (id, value))
+                        tdJustIds tdJustTsk
+        mid_ts = zipWith (\id value -> (id, value))
                         tdMinIds tdJustTsk
     
-    let newTasks = delete (getTask id id_ts) id_ts
+        pos = getPos (fst (getTask id mid_ts)) mid_ts
+        newTasks = delete (fid_ts !! pos ) fid_ts
         tdJI = getJustIds newTasks
         tdJT = getJustTasks newTasks
         nt   = zipWith (\id value -> value ++ " | " ++ id)
@@ -207,7 +209,6 @@ editTask file id task = do
         mid_ts = zipWith (\id value -> (id, value))
                     tdMinIds tdJustTsk
 
---        old = getTask id mid_ts
         pos = getPos (fst (getTask id mid_ts) ) mid_ts
         new = ( (fst ( fid_ts !! pos ) ), task)  
         newTasks = new : ( delete (fid_ts !! pos) fid_ts )
