@@ -19,25 +19,25 @@ Required libraries:
 
 Clone the Github Repository:
 
-    git clone https://github.com/hugo-dc/t.git
+    $ git clone https://github.com/hugo-dc/t.git
 
 Compile the t.hs source code:
 
-    cd t/
-    ghc --make t.hs
+    $ cd t/
+    $ ghc --make t.hs
 
 Decide where you want to keep your todo lists, create your directory:
 
-    mkdir /path/to/lists
+    $ mkdir /path/to/lists
 
 Create an empty file that will store your tasks:
 
-    cd /path/to/lists 
+    $ cd /path/to/lists 
     touch tasks
 
 Set up an alias to run `t`:
 
-    alias t='~path_to_t/t --task-dir /path/to/list --list tasks'
+    alias t='~/path_to_t/t --task-dir /path/to/list --list tasks'
 
 
 
@@ -63,7 +63,7 @@ To print a list of your current task just run the command `t`
 
 ### Finish a Task 
 
-To finish a task use the following format `t [task_id]`
+To finish a task use the following format `t -f [task_id]`
 
     $ t -f c
     $ t
@@ -71,7 +71,7 @@ To finish a task use the following format `t [task_id]`
 
 ### Edit a task 
 
-Use `t [task_id] [New task title]`:
+Use `t -e [task_id] [New task title]`:
 
     $ t -e 1 Write t command using Visual Basic 6
     $ t 
