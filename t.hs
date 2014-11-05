@@ -117,7 +117,7 @@ minimize acc (x:xs) = ( cmp acc x 0 ) : minimize (cmp acc x 0) xs
                             then 
                                ( a !! c ):(cmp a b (c+1)) 
                             else 
-                                [b !! 0]
+                                [b !! c]
 
 --minimizeIds 
 minimizeIds :: [String] -> [String]
@@ -147,7 +147,6 @@ getAllTasks file = do
         tasks = zipWith (\id value ->  id ++ ( take ( mx - (length id) ) $ repeat ' ') ++ " | " ++ value)
                         tdMinIds tdJustTsk
     mapM_ putStrLn tasks
-    
 
 --getTask 
 getTask :: String -> [(String, String)] -> (String, String)
