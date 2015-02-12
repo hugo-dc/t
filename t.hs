@@ -8,6 +8,10 @@ import Data.List.Split -- splitOn "|" "abc|def"
 import Data.String.Utils
 import Control.Exception
 
+-----------------------------------------------------------------
+-- Available Commands
+-- commands
+-----------------------------------------------------------------
 commands :: [(String, [String])]
 commands = [("r", ["-t", "--task-dir", "task_dir"]),
             ("r", ["-l", "--list"    , "list"]),
@@ -15,20 +19,87 @@ commands = [("r", ["-t", "--task-dir", "task_dir"]),
             (" ", ["-e", "--edit"    , "edit"]),
             (" ", ["-r", "--remove"  , "remove"])]
 
+
+-----------------------------------------------------------------
+-- Main
+-----------------------------------------------------------------
 main :: IO ()
 main = do 
     args <- getArgs
     checkCommands args
 
-argsOK :: [String] -> Bool
-argsOK args = and [e | (r,[mc, lc, c] ) <- commands, r == "r" , let e = ( mc `elem` args ) || ( lc `elem` args) ]
 
+-----------------------------------------------------------------
+-- Check Commands
+-----------------------------------------------------------------
+checkCommands :: [String] -> IO ()
+checkCommands args 
+    | argsOK args = checkOthers args
+    | otherwise = putStrLn "Error, provide task dir and list name!"
+
+
+
+-----------------------------------------------------------------
+-- Check Aarguments
+-----------------------------------------------------------------
+argsOK :: [String] -> Bool
+argsOK args = and [e | (r,[mc, lc, _] ) <- commands, r == "r" , let e = ( mc `elem` args ) || ( lc `elem` args) ]
+
+
+-----------------------------------------------------------------
+-- Check Others
+-----------------------------------------------------------------
+checkOthers :: [String] -> IO ()
+checkOthers args = do 
+    let c = countNR args
+    executeCommand args c
+
+
+-----------------------------------------------------------------
+-- countNR
+-----------------------------------------------------------------
+countNR :: [String] -> Int
+countNR args = sum [1 | (r, [mc, lc, _] ) <- commands, r /= "r", mc `elem` args || lc `elem` args ]
+
+-----------------------------------------------------------------
+-- executeCommand
+-----------------------------------------------------------------
+executeCommand :: [String] -> Int -> IO ()
+executeCommand args c  
+    | c == 1 = do
+        let cmd   = head ( fst $ getCommand args ) 
+            ps = getNum $ snd (getCommand args)
+            value = getValue ((fst $ getCommand args) !! ps) args
+            file  = getFile args
+
+        execute file cmd value
+    | c == 0 = do 
+        let file  = getFile args
+        createTask  file ( join " " $ drop 4 args  ) 
+    | otherwise   = putStrLn "Not OK!!!"
+
+-----------------------------------------------------------------
+-- getCommand
+-----------------------------------------------------------------
 getCommand :: [String] -> ([String], Bool)
 getCommand args =  head [ ([c, mc, lc], mc `elem` args)  | (r, [mc, lc, c]) <- commands, r /= "r", mc `elem` args || lc `elem` args ]  
 
+-----------------------------------------------------------------
+-- getNum
+-----------------------------------------------------------------
+getNum :: Bool -> Int 
+getNum True  = 1 
+getNum False = 2
+
+-----------------------------------------------------------------
+-- getValue
+-----------------------------------------------------------------
 getValue :: String -> [String] -> [String]
 getValue cmd args = drop (no $ elemIndex cmd args) args
 
+-----------------------------------------------------------------
+-- getFile
+-----------------------------------------------------------------
 getFile :: [String] -> String
 getFile args = dir ++ "\\" ++ file 
     where dir = args !! post 
@@ -39,74 +110,58 @@ getFile args = dir ++ "\\" ++ file
                    | b `elem` args = no ( elemIndex b args) + 1
                    | otherwise = -1
 
-no :: ( Maybe Int ) -> Int
-no ( Just a ) = a
-no Nothing = -1
-
+-----------------------------------------------------------------
+-- execute
+-----------------------------------------------------------------
 execute :: String -> String -> [String] -> IO ()
 execute file "finish" value = finishTask file (value !! 1)  
 execute file "edit"   value = editTask file ( value !! 1 ) ( join " " $ drop 2 value ) 
 execute file "remove" value = removeTask file (value !! 1)
-execute _ _ _ = do
-    putStrLn "ERROR!"
-    
-   
-executeCommand :: [String] -> Int -> IO ()
-executeCommand args c  
-    | c == 1 = do
-        let cmd   = ( fst $ getCommand args ) !! 0   
-            ps = getNum $ snd (getCommand args)
-            value = getValue ((fst $ getCommand args) !! ps) args
-            file  = getFile args
-
-        execute file cmd value
-    | c == 0 = do 
-        let cmd   = getCommand args 
-            file  = getFile args
-        createTask  file ( join " " $ drop 4 args  ) 
-    | otherwise   = putStrLn "Not OK!!!"
-
-getNum :: Bool -> Int 
-getNum True  = 1 
-getNum False = 2
-
-checkOthers :: [String] -> IO ()
-checkOthers args = do 
-    let c = countNR args
-    executeCommand args c
-
-countNR :: [String] -> Int
-countNR args = sum [1 | (r, [mc, lc, c] ) <- commands, r /= "r", mc `elem` args || lc `elem` args ]
-
-checkCommands :: [String] -> IO ()
-checkCommands args 
-    | argsOK args = checkOthers args
-    | otherwise = do putStrLn "Error, provide task dir and list name!"
+execute _ _ _ = putStrLn "ERROR!"
 
 
+-----------------------------------------------------------------
+-- no
+-----------------------------------------------------------------
+no :: ( Maybe Int ) -> Int
+no ( Just a ) = a
+no Nothing = -1
+
+-----------------------------------------------------------------
 -- Get Id
+-----------------------------------------------------------------
 getId :: String -> String
 getId task = show . sha1 $ pack task
 
+-----------------------------------------------------------------
 -- Create Task
+-----------------------------------------------------------------
 createTask :: String -> String -> IO () 
 createTask file    ""   = getAllTasks file 
 createTask file task = appendFile file ( task ++ " | " ++  (getId task)  ++ "\n")
             
 
+-----------------------------------------------------------------
 --getIDs 
+-----------------------------------------------------------------
 getIDs :: [String] -> [(String, String)]
 getIDs tasks = [ (last sp, unwords $ init sp)   | x <- tasks, let sp = splitOn " | " x ]
 
+-----------------------------------------------------------------
 --getJustIds 
+-----------------------------------------------------------------
 getJustIds :: [(String, String)] -> [String]
-getJustIds tasks = [x | (x,y) <- tasks]
+getJustIds tasks = [x | (x,_) <- tasks]
 
+-----------------------------------------------------------------
 --getJustTasks 
+-----------------------------------------------------------------
 getJustTasks :: [(String, String)] -> [String]
-getJustTasks tasks = [y | (x,y) <- tasks]
+getJustTasks tasks = [y | (_,y) <- tasks]
 
+-----------------------------------------------------------------
 --minimize 
+-----------------------------------------------------------------
 minimize :: String -> [String] -> [String]
 minimize  _ []      = []
 minimize "" (x:xs)  = [x !! 0 ] : minimize [ x !! 0 ] xs 
@@ -119,11 +174,15 @@ minimize acc (x:xs) = ( cmp acc x 0 ) : minimize (cmp acc x 0) xs
                             else 
                                 [b !! c]
 
+-----------------------------------------------------------------
 --minimizeIds 
+-----------------------------------------------------------------
 minimizeIds :: [String] -> [String]
-minimizeIds x = minimize "" x 
+minimizeIds = minimize ""  
 
+-----------------------------------------------------------------
 --sortTasksById
+-----------------------------------------------------------------
 sortTasksById :: [(String, String)] -> [(String, String)]
 sortTasksById []     = []
 sortTasksById (x:xs) = sortTasksById [(a, b) | (a,b) <- xs , a <= ( fst x ) ] 
@@ -134,7 +193,10 @@ getMaxLength :: [String] -> Int
 getMaxLength ids = maximum ls
     where ls = map length ids
 
+-----------------------------------------------------------------
 --getAllTasks
+-----------------------------------------------------------------
+getAllTasks :: String -> IO ()
 getAllTasks file = do
     contents <- readFile file 
     let todoTasks = lines contents
@@ -144,26 +206,33 @@ getAllTasks file = do
         tdMinIds  = minimizeIds tdJustIds
         mx        = getMaxLength tdMinIds
         tdJustTsk = getJustTasks tdOrd
-        tasks = zipWith (\id value ->  id ++ ( take ( mx - (length id) ) $ repeat ' ') ++ " | " ++ value)
+        tasks = zipWith (\tid value ->  tid ++ ( take ( mx - (length tid) ) $ repeat ' ') ++ " | " ++ value)
                         tdMinIds tdJustTsk
+    putStrLn "[t.hs | todo ]"
     mapM_ putStrLn tasks
 
+-----------------------------------------------------------------
 --getTask 
+-----------------------------------------------------------------
 getTask :: String -> [(String, String)] -> (String, String)
-getTask id tasks = head [(x, y) | (x, y) <- tasks, x == id]
+getTask tid tasks = head [(x, y) | (x, y) <- tasks, x == tid]
 
+-----------------------------------------------------------------
 -- Get Task Position
+-----------------------------------------------------------------
 getPos :: String -> [(String, String)] -> Int
-getPos id list 
+getPos tid list 
     | s >= ( length list ) = 0
-    | ( exist id list )  = s
+    | ( exist tid list )  = s
     | otherwise = (-1) 
-    where s = sum [ 1  | (x, y) <- list, x /= id, x < id ]
-          exist i l= or [ True | (x, y) <- l , x == i ]
+    where s = sum [ 1  | (x, _) <- list, x /= tid, x < tid ]
+          exist i l= or [ True | (x, _) <- l , x == i ]
 
+-----------------------------------------------------------------
 -- Remove task  
+-----------------------------------------------------------------
 removeTask :: String -> String -> IO ()
-removeTask file id = do 
+removeTask file tid = do 
     contents <- readFile file 
     let todoTasks = lines contents 
         tdIds = getIDs todoTasks
@@ -171,16 +240,16 @@ removeTask file id = do
         tdJustIds = getJustIds tdOrd
         tdMinIds = minimizeIds tdJustIds
         tdJustTsk = getJustTasks tdOrd
-        fid_ts = zipWith (\id value -> (id, value))
+        fid_ts = zipWith (\i value -> (i, value))
                         tdJustIds tdJustTsk
-        mid_ts = zipWith (\id value -> (id, value))
+        mid_ts = zipWith (\i value -> (i, value))
                         tdMinIds tdJustTsk
     
-        pos = getPos (fst (getTask id mid_ts)) mid_ts
+        pos = getPos (fst (getTask tid mid_ts)) mid_ts
         newTasks = delete (fid_ts !! pos ) fid_ts
         tdJI = getJustIds newTasks
         tdJT = getJustTasks newTasks
-        nt   = zipWith (\id value -> value ++ " | " ++ id)
+        nt   = zipWith (\i value -> value ++ " | " ++ i)
                         tdJI tdJT
     bracketOnError (openTempFile "." "temp")
         (\(tempName, tempHandle) -> do 
@@ -194,8 +263,11 @@ removeTask file id = do
 
 
 
+-----------------------------------------------------------------
+-- editTask
+-----------------------------------------------------------------
 editTask :: String -> String -> String -> IO ()
-editTask file id task = do 
+editTask file tid task = do 
     contents <- readFile file 
     let todoTasks = lines contents
         tdIds = getIDs todoTasks 
@@ -203,17 +275,17 @@ editTask file id task = do
         tdJustIds = getJustIds tdOrd 
         tdMinIds = minimizeIds tdJustIds
         tdJustTsk = getJustTasks tdOrd
-        fid_ts = zipWith (\id value -> (id, value))
+        fid_ts = zipWith (\i value -> (i, value))
                     tdJustIds tdJustTsk
-        mid_ts = zipWith (\id value -> (id, value))
+        mid_ts = zipWith (\i value -> (i, value))
                     tdMinIds tdJustTsk
 
-        pos = getPos (fst (getTask id mid_ts) ) mid_ts
+        pos = getPos (fst (getTask tid mid_ts) ) mid_ts
         new = ( (fst ( fid_ts !! pos ) ), task)  
         newTasks = new : ( delete (fid_ts !! pos) fid_ts )
         tdJI = getJustIds newTasks 
         tdJT = getJustTasks newTasks 
-        nt = zipWith (\id value -> value ++ " | " ++ id)
+        nt = zipWith (\i value -> value ++ " | " ++ i)
                      tdJI tdJT 
 
     bracketOnError (openTempFile "." "temp")
@@ -226,9 +298,11 @@ editTask file id task = do
             removeFile file 
             renameFile tempName file)
 
+-----------------------------------------------------------------
 -- Finish task [NW]
+-----------------------------------------------------------------
 finishTask :: String -> String -> IO ()
-finishTask file id = do 
+finishTask file tid = do 
     contents <- readFile file
     let todoTasks = lines contents 
         tdIds = getIDs todoTasks
@@ -236,23 +310,27 @@ finishTask file id = do
         tdJustIds = getJustIds tdOrd
         tdMinIds = minimizeIds tdJustIds
         tdJustTsk = getJustTasks tdOrd
-        mid_ts = zipWith (\id value -> (id, value))
+        mid_ts = zipWith (\i value -> (i, value))
                     tdMinIds tdJustTsk
-        fid_ts = zipWith (\id value -> (id, value))
+        fid_ts = zipWith (\i value -> (i, value))
                     tdJustIds tdJustTsk
-        pos = getPos id mid_ts 
+        pos = getPos tid mid_ts 
         nid = fst (fid_ts !! pos )
         tsk = snd (fid_ts !! pos )
         dnFN = file ++ ".done" 
     appendFile dnFN (tsk ++ " | " ++ nid ++ "\n") 
-    removeTask file id
+    removeTask file tid
 
 
 
+-----------------------------------------------------------------
 -- Grep tasks 
+-----------------------------------------------------------------
 --grepTask :: String -> String -> IO ()
 
+-----------------------------------------------------------------
 -- List Done tasks
+-----------------------------------------------------------------
 --listDone :: String -> IO ()
 
 
