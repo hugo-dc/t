@@ -5,7 +5,6 @@ import Data.Digest.Pure.SHA
 import Data.ByteString.Lazy.Char8 (pack)
 import Data.List
 import Data.List.Split -- splitOn "|" "abc|def"
-import Data.String.Utils
 import Control.Exception
 
 -----------------------------------------------------------------
@@ -75,7 +74,7 @@ executeCommand args c
         execute file cmd value
     | c == 0 = do 
         let file  = getFile args
-        createTask  file ( join " " $ drop 4 args  ) 
+        createTask  file ( intercalate " " $ drop 4 args  ) 
     | otherwise   = putStrLn "Not OK!!!"
 
 -----------------------------------------------------------------
@@ -115,7 +114,7 @@ getFile args = dir ++ "\\" ++ file
 -----------------------------------------------------------------
 execute :: String -> String -> [String] -> IO ()
 execute file "finish" value = finishTask file (value !! 1)  
-execute file "edit"   value = editTask file ( value !! 1 ) ( join " " $ drop 2 value ) 
+execute file "edit"   value = editTask file ( value !! 1 ) ( intercalate " " $ drop 2 value ) 
 execute file "remove" value = removeTask file (value !! 1)
 execute _ _ _ = putStrLn "ERROR!"
 
