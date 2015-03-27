@@ -197,6 +197,10 @@ getMaxLength ids = maximum ls
 -----------------------------------------------------------------
 getAllTasks :: String -> IO ()
 getAllTasks file = do
+    fileExist <- doesFileExist file
+    if not fileExist 
+    then writeFile file ""
+    else return ()
     contents <- readFile file 
     let todoTasks = lines contents
         tdIds     = getIDs todoTasks
@@ -207,7 +211,6 @@ getAllTasks file = do
         tdJustTsk = getJustTasks tdOrd
         tasks = zipWith (\tid value ->  tid ++ ( take ( mx - (length tid) ) $ repeat ' ') ++ " | " ++ value)
                         tdMinIds tdJustTsk
-    putStrLn "[t.hs | todo ]"
     mapM_ putStrLn tasks
 
 -----------------------------------------------------------------
