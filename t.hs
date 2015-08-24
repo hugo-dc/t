@@ -1,6 +1,7 @@
 import System.IO
 import System.Environment
 import System.Directory
+import System.FilePath (pathSeparator)
 import Data.Digest.Pure.SHA
 import Data.ByteString.Lazy.Char8 (pack)
 import Data.List
@@ -87,8 +88,8 @@ getCommand args =  head [ ([c, mc, lc], mc `elem` args)  | (r, [mc, lc, c]) <- c
 -- getNum
 -----------------------------------------------------------------
 getNum :: Bool -> Int 
-getNum True  = 1 
-getNum False = 2
+getNum x | x == True  = 1 
+         | x == False = 2
 
 -----------------------------------------------------------------
 -- getValue
@@ -100,7 +101,7 @@ getValue cmd args = drop (no $ elemIndex cmd args) args
 -- getFile
 -----------------------------------------------------------------
 getFile :: [String] -> String
-getFile args = dir ++ "\\" ++ file 
+getFile args = dir ++ [pathSeparator] ++ file 
     where dir = args !! post 
           file = args !! posf 
           post = ix ("--task-dir", "-t")
