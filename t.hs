@@ -2,22 +2,27 @@ import System.IO
 import System.Environment
 import System.Directory
 import System.FilePath (pathSeparator)
-import Data.Digest.Pure.SHA
+import Data.Digest.Pure.SHA (sha1)
 import Data.ByteString.Lazy.Char8 (pack)
 import Data.List
-import Data.List.Split -- splitOn "|" "abc|def"
+import Data.List.Split (splitOn)
 import Control.Exception
 
 -----------------------------------------------------------------
 -- Available Commands
 -- commands
 -----------------------------------------------------------------
-commands :: [(String, [String])]
-commands = [("r", ["-t", "--task-dir", "task_dir"]),
-            ("r", ["-l", "--list"    , "list"]),
-            (" ", ["-f", "--finish"  , "finish"]), 
-            (" ", ["-e", "--edit"    , "edit"]),
-            (" ", ["-r", "--remove"  , "remove"])]
+
+data CommandReq = Required
+                | Optional
+                  deriving(Eq)
+
+commands :: [(CommandReq, [String])]
+commands = [(Required, ["-t", "--task-dir", "task_dir"]),
+            (Required, ["-l", "--list"    , "list"]),
+            (Optional, ["-f", "--finish"  , "finish"]), 
+            (Optional, ["-e", "--edit"    , "edit"]),
+            (Optional, ["-r", "--remove"  , "remove"])]
 
 
 -----------------------------------------------------------------
@@ -39,11 +44,9 @@ checkCommands args
 
 
 
------------------------------------------------------------------
--- Check Aarguments
------------------------------------------------------------------
+-- Check Aarguments: Check if required commands are set
 argsOK :: [String] -> Bool
-argsOK args = and [e | (r,[mc, lc, _] ) <- commands, r == "r" , let e = ( mc `elem` args ) || ( lc `elem` args) ]
+argsOK args = and [e | (r,[mc, lc, _] ) <- commands, r == Required , let e = ( mc `elem` args ) || ( lc `elem` args) ]
 
 
 -----------------------------------------------------------------
@@ -59,7 +62,7 @@ checkOthers args = do
 -- countNR
 -----------------------------------------------------------------
 countNR :: [String] -> Int
-countNR args = sum [1 | (r, [mc, lc, _] ) <- commands, r /= "r", mc `elem` args || lc `elem` args ]
+countNR args = sum [1 | (r, [mc, lc, _] ) <- commands, r /= Required, mc `elem` args || lc `elem` args ]
 
 -----------------------------------------------------------------
 -- executeCommand
@@ -82,7 +85,7 @@ executeCommand args c
 -- getCommand
 -----------------------------------------------------------------
 getCommand :: [String] -> ([String], Bool)
-getCommand args =  head [ ([c, mc, lc], mc `elem` args)  | (r, [mc, lc, c]) <- commands, r /= "r", mc `elem` args || lc `elem` args ]  
+getCommand args =  head [ ([c, mc, lc], mc `elem` args)  | (r, [mc, lc, c]) <- commands, r /= Required, mc `elem` args || lc `elem` args ]  
 
 -----------------------------------------------------------------
 -- getNum

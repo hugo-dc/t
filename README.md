@@ -15,6 +15,7 @@ Installing t
 
 Required libraries:
 
+- sha (Install: `cabal install sha`)
 - split (Install using `cabal install split`) 
 
 Clone the Github Repository:
