@@ -11,21 +11,17 @@ the language.
 Installing t
 ------------
 
-`t` Uses the [Haskell Platform 2014.2](https://www.haskell.org/platform/). 
-
-Required libraries:
-
-- sha (Install: `cabal install sha`)
-- split (Install using `cabal install split`) 
+`t` is build using Stack, please follow this instruction to install
+the program:
 
 Clone the Github Repository:
 
     $ git clone https://github.com/hugo-dc/t.git
 
-Compile the t.hs source code:
+Compile/Install the t.hs source code:
 
     $ cd t/
-    $ ghc --make t.hs
+    $ stack install
 
 Decide where you want to keep your todo lists, create your directory:
 
@@ -39,8 +35,6 @@ Create an empty file that will store your tasks:
 Set up an alias to run `t`:
 
     alias t='~/path_to_t/t --task-dir /path/to/list --list tasks'
-
-
 
 Using t
 -------

@@ -29,9 +29,9 @@ commands = [(Required, ["-t", "--task-dir", "task_dir"]),
 -- Main
 -----------------------------------------------------------------
 main :: IO ()
-main = do 
-    args <- getArgs
-    checkCommands args
+main = do
+  args <- getArgs
+  checkCommands args
 
 
 -----------------------------------------------------------------
@@ -76,7 +76,7 @@ executeCommand args c
             file  = getFile args
 
         execute file cmd value
-    | c == 0 = do 
+    | c == 0 = do
         let file  = getFile args
         createTask  file ( intercalate " " $ drop 4 args  ) 
     | otherwise   = putStrLn "Not OK!!!"
@@ -201,21 +201,24 @@ getMaxLength ids = maximum ls
 -----------------------------------------------------------------
 getAllTasks :: String -> IO ()
 getAllTasks file = do
-    fileExist <- doesFileExist file
-    if not fileExist 
-    then writeFile file ""
-    else return ()
-    contents <- readFile file 
-    let todoTasks = lines contents
-        tdIds     = getIDs todoTasks
-        tdOrd     = sortTasksById tdIds
-        tdJustIds = getJustIds tdOrd
-        tdMinIds  = minimizeIds tdJustIds
-        mx        = getMaxLength tdMinIds
-        tdJustTsk = getJustTasks tdOrd
-        tasks = zipWith (\tid value ->  tid ++ ( take ( mx - (length tid) ) $ repeat ' ') ++ " | " ++ value)
-                        tdMinIds tdJustTsk
+  fileExist <- doesFileExist file
+  if not fileExist 
+  then writeFile file ""
+  else return ()
+  contents <- readFile file 
+  let todoTasks = lines contents
+      tdIds     = getIDs todoTasks
+      tdOrd     = sortTasksById tdIds
+      tdJustIds = getJustIds tdOrd
+      tdMinIds  = minimizeIds tdJustIds
+      mx        = getMaxLength tdMinIds
+      tdJustTsk = getJustTasks tdOrd
+      tasks = zipWith (\tid value ->  tid ++ ( take ( mx - (length tid) ) $ repeat ' ') ++ " | " ++ value)  tdMinIds tdJustTsk
+  if null tasks then
+    putStrLn "\nTask list is empty!"
+  else
     mapM_ putStrLn tasks
+
 
 -----------------------------------------------------------------
 --getTask 
